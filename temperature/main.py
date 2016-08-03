@@ -1,0 +1,2 @@
+import timer
+timer.start()
