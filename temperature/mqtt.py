@@ -1,6 +1,7 @@
 from simple import MQTTClient
+from settings import MQTT_HOSTNAME
 
-c = MQTTClient('umqtt_client', 'HOSTNAME')
+c = MQTTClient('umqtt_client', MQTT_HOSTNAME)
 c.connect()
 c.publish(b'status', b'hi')
 

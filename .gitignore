@@ -1,3 +1,4 @@
 env2
 *.bin
 *.pyc
+settings.py
