@@ -1,6 +1,7 @@
 import time
 import machine
 import onewire
+import ds18x20
 
 
 def read_temp():
@@ -8,7 +9,7 @@ def read_temp():
     dat = machine.Pin(5)
 
     # create the onewire object
-    ds = onewire.DS18B20(onewire.OneWire(dat))
+    ds = ds18x20.DS18X20(onewire.OneWire(dat))
 
     # scan for devices on the bus
     roms = ds.scan()
