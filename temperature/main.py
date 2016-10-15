@@ -1,3 +1,6 @@
+import wifi
+wifi.connect()
+
 import status
 status.init()
 

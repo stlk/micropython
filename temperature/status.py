@@ -19,3 +19,6 @@ def ok():
 
 def init():
     set_color((0, 0, 255))
+
+def violet():
+    set_color((148, 0, 211))

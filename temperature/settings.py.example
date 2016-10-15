@@ -1,1 +1,3 @@
 MQTT_HOSTNAME = 'example.com'
+SSID = 'ssid'
+PASSWORD = 'password'
