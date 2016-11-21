@@ -1,8 +1,10 @@
 from machine import Pin
 from neopixel import NeoPixel
 
+NEOPIXEL_COUNT = 1
+
 pin = Pin(4, Pin.OUT)
-np = NeoPixel(pin, 1)
+np = NeoPixel(pin, NEOPIXEL_COUNT)
 
 def set_color(color):
     np[0] = color
