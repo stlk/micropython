@@ -1,8 +1,12 @@
 from simple import MQTTClient
-from settings import MQTT_HOSTNAME
+from settings import MQTT_HOSTNAME, MQTT_PORT, MQTT_USER, MQTT_PASSWORD
 import status
 
-c = MQTTClient('umqtt_client', MQTT_HOSTNAME)
+c = MQTTClient('umqtt_client',
+               MQTT_HOSTNAME,
+               port = MQTT_PORT,
+               user = MQTT_USER,
+               password = MQTT_PASSWORD)
 
 try:
     c.connect()

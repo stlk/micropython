@@ -1,3 +1,6 @@
 MQTT_HOSTNAME = 'example.com'
+MQTT_PORT = 0
+MQTT_USER = None
+MQTT_PASSWORD = None
 SSID = 'ssid'
 PASSWORD = 'password'
