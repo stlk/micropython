@@ -1,3 +1,4 @@
+import network
 from simple import MQTTClient
 from settings import MQTT_HOSTNAME, MQTT_PORT, MQTT_USER, MQTT_PASSWORD
 import status
@@ -14,6 +15,12 @@ try:
 except:
     status.error()
     print('MQTT hello failed')
+
+try:
+    sta_if = network.WLAN(network.STA_IF)
+    c.publish(b'status', b'ip: %s' % (sta_if.ifconfig()[0],))
+except:
+    print('MQTT IP publish failed')
 
 def publish(temp):
     c.publish(b'temp', b'%s' % (temp,))
