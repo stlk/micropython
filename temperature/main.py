@@ -6,6 +6,3 @@ status.init()
 
 import timer
 timer.start()
-
-import fader
-fader.init()

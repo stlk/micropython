@@ -1,6 +1,8 @@
-from time import sleep
-from status import np, NEOPIXEL_COUNT
 from machine import Timer
+
+def brightness(colors, brightness = 0.2):
+    r, g, b = colors
+    return (int(r * brightness), int(g * brightness), int(b * brightness))
 
 def wheel(pos):
     pos = 255 - pos
@@ -13,22 +15,26 @@ def wheel(pos):
     return (pos * 3, 255 - pos * 3, 0)
 
 class Fader(object):
-    def __init__(self):
+    def __init__(self, np, NEOPIXEL_COUNT):
         super(Fader, self).__init__()
         self.step = 0
+        self.np = np
+        self.NEOPIXEL_COUNT = NEOPIXEL_COUNT
+        self.tim = Timer(-1)
+
+    def start(self):
+        self.tim.init(period=40, mode=Timer.PERIODIC, callback=self.tick)
+
+    def stop(self):
+        self.tim.deinit()
 
     def rainbow_cycle(self):
-        for i in range(0, NEOPIXEL_COUNT):
-            np[i] = wheel(int(i * 256 / NEOPIXEL_COUNT + self.step) & 255)
-        np.write()
+        for i in range(0, self.NEOPIXEL_COUNT):
+            self.np[i] = brightness(wheel(int(i * 256 / self.NEOPIXEL_COUNT + self.step) & 255))
+        self.np.write()
 
     def tick(self, t):
         self.rainbow_cycle()
         self.step += 1
         if self.step > 256 * 5:
             self.step = 0
-
-def init():
-    fader = Fader()
-    tim = Timer(-1)
-    tim.init(period=40, mode=Timer.PERIODIC, callback=fader.tick)

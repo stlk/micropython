@@ -1,10 +1,13 @@
 from machine import Pin
 from neopixel import NeoPixel
+from fader import Fader
 
-NEOPIXEL_COUNT = 1
+NEOPIXEL_COUNT = 8
 
 pin = Pin(4, Pin.OUT)
 np = NeoPixel(pin, NEOPIXEL_COUNT)
+
+fader = Fader(np, NEOPIXEL_COUNT)
 
 def set_color(color):
     np[0] = color
@@ -20,7 +23,7 @@ def ok():
     set_color((0, 255, 0))
 
 def init():
-    set_color((0, 0, 255))
+    fader.start()
 
 def violet():
     set_color((148, 0, 211))
