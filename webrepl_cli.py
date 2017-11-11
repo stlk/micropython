@@ -3,7 +3,6 @@ from __future__ import print_function
 import sys
 import os
 import struct
-import getpass
 try:
     import usocket as socket
 except ImportError:
@@ -17,7 +16,10 @@ SANDBOX = ""
 #SANDBOX = "/tmp/webrepl/"
 DEBUG = 0
 
-WEBREPL_FILE = "<2sBBQLH64s"
+WEBREPL_REQ_S = "<2sBBQLH64s"
+WEBREPL_PUT_FILE = 1
+WEBREPL_GET_FILE = 2
+WEBREPL_GET_VER  = 3
 
 
 def debugmsg(msg):
@@ -86,13 +88,12 @@ else:
             assert req == 9 and val == 2
 
 
-def login(ws):
+def login(ws, passwd):
     while True:
         c = ws.read(1, text_ok=True)
         if c == b":":
             assert ws.read(1, text_ok=True) == b" "
             break
-    passwd = getpass.getpass()
     ws.write(passwd.encode("utf-8") + b"\r")
 
 def read_resp(ws):
@@ -101,10 +102,24 @@ def read_resp(ws):
     assert sig == b"WB"
     return code
 
+
+def send_req(ws, op, sz=0, fname=b""):
+    rec = struct.pack(WEBREPL_REQ_S, b"WA", op, 0, 0, sz, len(fname), fname)
+    debugmsg("%r %d" % (rec, len(rec)))
+    ws.write(rec)
+
+
+def get_ver(ws):
+    send_req(ws, WEBREPL_GET_VER)
+    d = ws.read(3)
+    d = struct.unpack("<BBB", d)
+    return d
+
+
 def put_file(ws, local_file, remote_file):
     sz = os.stat(local_file)[6]
     dest_fname = (SANDBOX + remote_file).encode("utf-8")
-    rec = struct.pack(WEBREPL_FILE, b"WA", 1, 0, 0, sz, len(dest_fname), dest_fname)
+    rec = struct.pack(WEBREPL_REQ_S, b"WA", WEBREPL_PUT_FILE, 0, 0, sz, len(dest_fname), dest_fname)
     debugmsg("%r %d" % (rec, len(rec)))
     ws.write(rec[:10])
     ws.write(rec[10:])
@@ -124,12 +139,14 @@ def put_file(ws, local_file, remote_file):
 
 def get_file(ws, local_file, remote_file):
     src_fname = (SANDBOX + remote_file).encode("utf-8")
-    rec = struct.pack(WEBREPL_FILE, b"WA", 2, 0, 0, 0, len(src_fname), src_fname)
-    print(rec, len(rec))
+    rec = struct.pack(WEBREPL_REQ_S, b"WA", WEBREPL_GET_FILE, 0, 0, 0, len(src_fname), src_fname)
+    debugmsg("%r %d" % (rec, len(rec)))
     ws.write(rec)
     assert read_resp(ws) == 0
     with open(local_file, "wb") as f:
+        cnt = 0
         while True:
+            ws.write(b"\0")
             (sz,) = struct.unpack("<H", ws.read(2))
             if sz == 0:
                 break
@@ -137,8 +154,12 @@ def get_file(ws, local_file, remote_file):
                 buf = ws.read(sz)
                 if not buf:
                     raise OSError()
+                cnt += len(buf)
                 f.write(buf)
                 sz -= len(buf)
+                sys.stdout.write("Received %d bytes\r" % cnt)
+                sys.stdout.flush()
+    print()
     assert read_resp(ws) == 0
 
 
@@ -146,12 +167,12 @@ def help(rc=0):
     exename = sys.argv[0].rsplit("/", 1)[-1]
     print("%s - Perform remote file operations using MicroPython WebREPL protocol" % exename)
     print("Arguments:")
-    print("  <host>:<remote_file> <local_file> - Copy remote file to local file")
-    print("  <local_file> <host>:<remote_file> - Copy local file to remote file")
+    print("  [-p password] <host>:<remote_file> <local_file> - Copy remote file to local file")
+    print("  [-p password] <local_file> <host>:<remote_file> - Copy local file to remote file")
     print("Examples:")
     print("  %s script.py 192.168.4.1:/another_name.py" % exename)
     print("  %s script.py 192.168.4.1:/app/" % exename)
-    print("  %s 192.168.4.1:/app/script.py ." % exename)
+    print("  %s -p password 192.168.4.1:/app/script.py ." % exename)
     sys.exit(rc)
 
 def error(msg):
@@ -164,14 +185,25 @@ def parse_remote(remote):
         fname = "/"
     port = 8266
     if ":" in host:
-        host, port = remote.split(":")
+        host, port = host.split(":")
         port = int(port)
     return (host, port, fname)
 
-def main():
 
-    if len(sys.argv) != 3:
+def main():
+    if len(sys.argv) not in (3, 5):
         help(1)
+
+    passwd = None
+    for i in range(len(sys.argv)):
+        if sys.argv[i] == '-p':
+            sys.argv.pop(i)
+            passwd = sys.argv.pop(i)
+            break
+
+    if not passwd:
+        import getpass
+        passwd = getpass.getpass()
 
     if ":" in sys.argv[1] and ":" in sys.argv[2]:
         error("Operations on 2 remote files are not supported")
@@ -193,8 +225,8 @@ def main():
             basename = src_file.rsplit("/", 1)[-1]
             dst_file += basename
 
-    if 1:
-        print(op, host, port)
+    if True:
+        print("op:%s, host:%s, port:%d, passwd:%s." % (op, host, port, passwd))
         print(src_file, "->", dst_file)
 
     s = socket.socket()
@@ -208,7 +240,8 @@ def main():
 
     ws = websocket(s)
 
-    login(ws)
+    login(ws, passwd)
+    print("Remote WebREPL version:", get_ver(ws))
 
     # Set websocket to send data marked as "binary"
     ws.ioctl(9, 2)
