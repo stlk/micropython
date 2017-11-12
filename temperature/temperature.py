@@ -13,10 +13,10 @@ def read_temp():
 
     # scan for devices on the bus
     roms = ds.scan()
-    print('found devices:', roms)
-    print('temperature:', end=' ')
+    # print('found devices:', roms)
+    # print('temperature:', end=' ')
     ds.convert_temp()
     time.sleep_ms(750)
     temp = ds.read_temp(roms[0])
-    print(temp)
+    # print(temp)
     return temp
