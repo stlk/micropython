@@ -1,3 +1,4 @@
+import time
 from machine import Pin
 from neopixel import NeoPixel
 from fader import Fader
@@ -11,6 +12,8 @@ fader = Fader(np, NEOPIXEL_COUNT)
 
 def set_color(color):
     np[0] = color
+    for i in range(1, NEOPIXEL_COUNT):
+        np[i] = (0, 0, 0)
     np.write()
 
 def warn():
@@ -19,8 +22,18 @@ def warn():
 def error():
     set_color((255, 0, 0))
 
-def ok():
-    set_color((0, 255, 0))
+def beacon():
+    fader.stop()
+    for repeat in range(0, 10):
+        for pos in range(0, NEOPIXEL_COUNT):
+            for i in range(0, NEOPIXEL_COUNT):
+                if i == pos:
+                    np[i] = (249, 72, 119)
+                else:
+                    np[i] = (0, 0, 0)
+            np.write()
+            time.sleep_ms(100)
+    fader.start()
 
 def init():
     fader.start()
