@@ -1,5 +1,5 @@
 import network
-from simple import MQTTClient
+from robust import MQTTClient
 from settings import MQTT_HOSTNAME, MQTT_PORT, MQTT_USER, MQTT_PASSWORD
 import status
 
