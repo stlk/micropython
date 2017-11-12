@@ -6,7 +6,7 @@ import status
 tim = Timer(-1)
 
 def tick(t):
-    status.warn()
+    mqtt.c.check_msg()
     temp = temperature.read_temp()
     mqtt.send(temp)
 
